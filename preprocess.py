@@ -5,6 +5,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import sys
 import re
+import os
 import string
 import nltk
 from nltk.corpus import stopwords
@@ -16,12 +17,22 @@ nltk.download('wordnet')
 
 class Preprocess:
 
+    def getFiles():
+        text_list = []
+        for folder in os.listdir('Data'):
+            for file in os.listdir('Data/' + folder):
+                if file[-3:] == 'txt':
+                    name = '{}/{}'.format(folder, file)
+                    text_list.append(name)
+        return text_list
+
     def readData(filename):
         input_data = []
         output_data = []
         full_data = []
-        for each in open('Data/{}'.format(filename)):
+        for each in open('Data/{}'.format(filename)).read().replace('\n', ' ').split('.'):
             each = each.lower().strip()
+            each = each.translate(str.maketrans('', '', string.punctuation))
             if not each:
                 continue
 

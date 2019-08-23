@@ -4,23 +4,27 @@ import keras
 import sys
 import re
 from preprocess import Preprocess
+from models import Models
+import pickle
 
-MAX_VOCAB_SIZE = 5000
-MAX_SEQ_LEN = 100
+MAX_VOCAB_SIZE = 3000
+MAX_SEQ_LEN = 50
 EMBEDDING_DIM = 100
+UNIT_DIM = 64
+BATCH_SIZE = 16
 
 input_data, output_data, full_data = [], [], []
-input_data.extend(Preprocess.readData('robert_frost.txt')[0])
-output_data.extend(Preprocess.readData('robert_frost.txt')[1])
-full_data.extend(Preprocess.readData('robert_frost.txt')[2])
-
-print(full_data[0])
+files = Preprocess.getFiles()
+print(files)
+for each in files:
+    input_data.extend(Preprocess.readData(each)[0])
+    output_data.extend(Preprocess.readData(each)[1])
+    full_data.extend(Preprocess.readData(each)[2])
 
 tokenizer, word2idx = Preprocess.fitTokenizer(full_data, MAX_VOCAB_SIZE)
+idx2word = {word2idx[each] : each for each in word2idx.keys()}
 input_seq = tokenizer.texts_to_sequences(input_data)
 output_seq = tokenizer.texts_to_sequences(output_data)
-
-print(input_seq[0])
 
 max_seq_len = max([len(each) for each in input_seq])
 max_seq_len = min(max_seq_len, MAX_SEQ_LEN)
@@ -33,3 +37,18 @@ word2vec = Preprocess.getWord2Vec(EMBEDDING_DIM)
 embedding_matrix, num_words = Preprocess.getEmbeddingMatrix(MAX_VOCAB_SIZE, word2idx, word2vec)
 
 onehot_output_seq = Preprocess.oneHotOutput(output_seq, max_seq_len, num_words)
+
+model, embedding_layer, lstm_layer, dense_layer, hidden, cell = Models.usingLSTM(input_seq, onehot_output_seq, embedding_matrix, max_seq_len, UNIT_DIM, num_words, BATCH_SIZE)
+sampling_model = Models.samplingModel(embedding_layer, lstm_layer, dense_layer, hidden, cell)
+
+## Saving the Models
+model_json = sampling_model.to_json()
+with open('Models/sampling_model.json', 'w') as json_file:
+    json_file.write(model_json)
+sampling_model.save_weights('Models/sampling_model.h5')
+
+with open('Models/word2idx.pickle', 'wb') as f:
+    pickle.dump(word2idx, f, protocol = pickle.HIGHEST_PROTOCOL)
+
+with open('Models/idx2word.pickle', 'wb') as f:
+    pickle.dump(idx2word, f, protocol = pickle.HIGHEST_PROTOCOL)
