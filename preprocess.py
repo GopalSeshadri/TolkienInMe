@@ -18,6 +18,12 @@ nltk.download('wordnet')
 class Preprocess:
 
     def getFiles():
+        '''
+        This function returns the list of files in data folder.
+
+        Returns:
+        text_list (list) : A list of file names
+        '''
         text_list = []
         for folder in os.listdir('Data'):
             for file in os.listdir('Data/' + folder):
@@ -27,6 +33,17 @@ class Preprocess:
         return text_list
 
     def readData(filename):
+        '''
+        This function takes in a filename and returns three lists, one for input of the model, one for the output and one for tokenization.
+
+        Parameters:
+        filename (str) : The name of the input file.
+
+        Returns:
+        input_data (list) : A list of sentences with <sos> tag at the beginning
+        output_data (list) : A list of sentences with <eos> tag at the end
+        full_data (list) : A list of sentences with <sos> tag and <eos> tag. This is used to train the tokenizer.
+        '''
         input_data = []
         output_data = []
         full_data = []
@@ -43,16 +60,36 @@ class Preprocess:
         return input_data, output_data, full_data
 
     def fitTokenizer(data, vocab_size):
+        '''
+        This function takes in data and vocabulary size and train a tokenizer and returns it and word to index of the same.
+
+        Parameters:
+        data (list) : The data for tokenizer to train on.
+        vocab_size (int) : The size of the vocalbulary, which is the number of words in the tokenizer.
+
+        Returns:
+        tokenizer (Object) : A tokenizer object fitted on the above data.
+        '''
         tokenizer = Tokenizer(num_words = vocab_size, filters = '')
         tokenizer.fit_on_texts(data)
         return tokenizer, tokenizer.word_index
 
     def padSequences(data, max_seq_len):
+        '''
+        This function takes in data and the maximum sequence length. Returns list with fixed sequence length.
+
+        Parameters:
+        data (list) : A list of sequences with varied lengths.
+        max_seq_len (int) : The maximum length of the input sequence.
+        '''
         return pad_sequences(data, maxlen = max_seq_len, padding = 'post')
 
     def getWord2Vec(embedding_dim):
         '''
         This function returns the dictionary of word vectors
+
+        Parameters:
+        embedding_dim (int) : The size of the embedding vectors
 
         Returns:
         word2vec (dict) : A dictionary of word vectors
@@ -86,6 +123,18 @@ class Preprocess:
         return embedding_matrix, number_of_words
 
     def oneHotOutput(output_seq, max_seq_len, num_words):
+        '''
+        This function takes in the output sequence list, the maximum length of sequences and the number of words. Returns one hot version
+        of the given output sequence.
+
+        Parameters:
+        output_seq (list) : A list of sequence with fixed length
+        max_seq_len (int) : The maximum length of the given input sequences
+        num_words (int) : The number of words in the vocabulary.
+
+        Returns:
+        onehot_output_seq (int) : The list of one hot vectors for the given list of output sequence.
+        '''
         onehot_output_seq = np.zeros((len(output_seq), max_seq_len, num_words))
         for i, each in enumerate(output_seq):
             for w, word_idx in enumerate(each):
